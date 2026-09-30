@@ -52,13 +52,17 @@ public:
     }
 
     void log(const char* fmt ...) const {
-        va_list ap;
-        va_start(ap, fmt);
-        vlog(fmt, ap);
-        va_end(ap);
+        char buf[256];
+        va_list args;
+        va_start(args, fmt);
+        vsnprintf(buf, sizeof(buf), fmt, args);
+        va_end(args);
+        OutputDebugStringA(buf);
     }
     void vlog(const char* fmt, va_list ap) const {
-        vprintf(fmt, ap);
+        char buf[256];
+        vsnprintf(buf, sizeof(buf), fmt, ap);
+        OutputDebugStringA(buf);
     }
     void fmt_event(const char* msg, const WindowsEvent& e) const {
         printf("%s: vk=%lu %s time=%lu\n", msg,
