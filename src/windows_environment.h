@@ -22,12 +22,10 @@ public:
 
     struct archived_event_t { DWORD kc; DWORD t; };
 
-
-    Keycode detail_of(const WindowsEvent& e) const { return e.raw.vkCode; }
-    static DWORD keycode_of(const WindowsEvent& e) { return e.raw.vkCode; }
+    static Keycode detail_of(const WindowsEvent& e) { return e.raw.vkCode; }
     static DWORD time_of(const WindowsEvent& e)     { return e.raw.time; } // see earlier wraparound note
-
-    Time    time_of(const WindowsEvent& e)   const { return e.raw.time; } // wraps ~49.7 days, unsigned subtraction handles it
+    // Time    time_of(const WindowsEvent& e)   const { return e.raw.time; }
+    // wraps ~49.7 days, unsigned subtraction handles it
 
     void archive_event(PlatformArchive& ae, const WindowsEvent& e) const {
         ae.vk = e.raw.vkCode;
