@@ -17,16 +17,20 @@ HHOOK     g_hook = nullptr;
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
         auto* kb = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
-        WindowsEvent ev{*kb};
 
-        // optional: scope to one app, per earlier discussion
-        // HWND fg = GetForegroundWindow();
-        // DWORD pid; GetWindowThreadProcessId(fg, &pid);
-        // if (pid != target_pid) return CallNextHookEx(nullptr, nCode, wParam, lParam);
+        // our own output, pass through untouched
+        if (kb->dwExtraInfo == INJECTED_MARKER) {
+            return CallNextHookEx(nullptr, nCode, wParam, lParam);
+        }
+
 
         bool key_down = (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN);
-        bool suppress = g_processor->handle_incoming(ev, key_down); // your state machine decides
-        if (suppress) return 1; // swallow original; output() above already sent the replacement
+        WindowsEvent ev{*kb, key_down};
+
+        // fixme:
+        if (g_processor.handle_incoming(ev)) {
+            return 1; // suppressed: g_env.output() already sent the replacement, if any
+        }
     }
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
