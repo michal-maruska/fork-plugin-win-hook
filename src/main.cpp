@@ -27,14 +27,13 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
             return CallNextHookEx(nullptr, nCode, wParam, lParam);
         }
 
-
         bool key_down = (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN);
         WindowsEvent ev{*kb, key_down};
 
-        // fixme:
-        if (g_processor.handle_incoming(ev)) {
-            return 1; // suppressed: g_env.output() already sent the replacement, if any
-        }
+        // hand over to forkingMachine; it will call WindowsEnvironment::relay_event
+        // which re-injects via SendInput with INJECTED_MARKER
+        (void)g_processor.accept_event(ev);
+        return 1; // swallow original; replacement (if any) already re-injected
     }
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
