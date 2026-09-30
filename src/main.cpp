@@ -19,7 +19,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         auto* kb = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
 
         // our own output, pass through untouched
-        if (kb->dwExtraInfo == INJECTED_MARKER) {
+        if (kb->dwExtraInfo == Env::INJECTED_MARKER) {
             return CallNextHookEx(nullptr, nCode, wParam, lParam);
         }
 
