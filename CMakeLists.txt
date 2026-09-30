@@ -5,7 +5,8 @@ include(FetchContent)
 FetchContent_Declare(
     forking_machine
     GIT_REPOSITORY https://github.com/michal-maruska/fork-plugin-core/
-    GIT_TAG        0.4
+    GIT_TAG        main
+    # 0.4
 )
 FetchContent_MakeAvailable(forking_machine)
 
