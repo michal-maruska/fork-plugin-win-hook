@@ -23,4 +23,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: fork-windows-hook
-          path: build/fork-windows-hook.exe
+          path: |
+            build/fork-windows-hook.exe
+            build/fork-windows-hook.pdb
