@@ -1,0 +1,20 @@
+name: windows-hook-build
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - run: cmake -B build -G Ninja
+      - run: cmake --build build
+      - name: Smoke-run the hook binary
+        run: |
+          Start-Process -FilePath build\fork-windows-hook.exe -PassThru | ForEach-Object { Start-Sleep -Seconds 2; Stop-Process -Id $_.Id }
+        shell: pwsh
+
