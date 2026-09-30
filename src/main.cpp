@@ -1,8 +1,12 @@
 #include <windows.h>
+
 #include "machine.h"
 #include "fork_base.h"
 #include "windows_environment.h"
 #include "circular_archive.h"
+#include <winreg.h>
+
+
 using Env       = WindowsEnvironment;
 using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
 using Processor = forkNS::forkingMachine<Env, Archive>;
@@ -34,6 +38,18 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     }
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
+
+
+bool load_config(DWORD& out_value) {
+    HKEY key;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\ForkingMachine", 0, KEY_READ, &key) != ERROR_SUCCESS)
+        return false;
+    DWORD size = sizeof(DWORD);
+    LONG r = RegQueryValueExW(key, L"SomeSetting", nullptr, nullptr, reinterpret_cast<BYTE*>(&out_value), &size);
+    RegCloseKey(key);
+    return r == ERROR_SUCCESS;
+}
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     Processor processor;
