@@ -15,7 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+
       - run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build --config Release
 
