@@ -9,7 +9,7 @@ using Processor = forkNS::forkingMachine<Env, Archive>;
 
 namespace forkNS { extern template class forkingMachine<Env, Archive>; }
 
-Env       g_env;
+Env*      g_env = new Env();
 Processor g_processor(g_env);
 HHOOK     g_hook = nullptr;
 
@@ -35,8 +35,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
-    Processor processor;
-    g_processor = &processor;
+    g_processor.create_configs();
 
     g_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
     if (!g_hook) return 1;
