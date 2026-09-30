@@ -3,13 +3,14 @@ name: windows-hook-build
 on:
   push:
     branches: ['**']
+    tags: ['v*']
   workflow_dispatch: {}
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ilammy/msvc-dev-cmd@v1
       - run: cmake -B build -G Ninja
@@ -20,9 +21,15 @@ jobs:
           Start-Process -FilePath build\fork-windows-hook.exe -PassThru | ForEach-Object { Start-Sleep -Seconds 2; Stop-Process -Id $_.Id }
         shell: pwsh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: fork-windows-hook
           path: |
             build/fork-windows-hook.exe
             build/fork-windows-hook.pdb
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: build/fork-windows-hook.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
