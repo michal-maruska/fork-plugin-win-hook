@@ -1,10 +1,18 @@
 #include <windows.h>
 #include "machine.h"
+#include "fork_base.h"
 #include "windows_environment.h"
+#include "circular_archive.h"
+using Env       = WindowsEnvironment;
+using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
+using Processor = forkNS::forkingMachine<Env, Archive>;
 
-using Processor = KeyProcessor<WindowsEvent, WindowsEnvironment>;
-Processor* g_processor = nullptr; // hook callbacks are plain C function pointers, no capture allowed
-HHOOK g_hook = nullptr;
+namespace forkNS { extern template class forkingMachine<Env, Archive>; }
+
+Env       g_env;
+Processor g_processor(g_env);
+HHOOK     g_hook = nullptr;
+
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
