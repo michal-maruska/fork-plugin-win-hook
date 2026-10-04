@@ -35,7 +35,6 @@ public:
     bool ignore_event(const WindowsEvent& e) { (void)e; return false; }
     bool output_frozen() { return false; }
     void push_time(Time now) { (void)now; }
-    void push_time_to_next() {}
 
     void archive_event(PlatformArchive& ae, const WindowsEvent& e) {
         ae.vk = e.raw.vkCode;
