@@ -3,6 +3,10 @@
 #include "fork_base.h"
 #include "windows_environment.h"
 #include "circular_archive.h"
+
+#include <fstream>
+#include <sstream>   // for std::wistringstream, used right below in the same function
+
 using Env       = WindowsEnvironment;
 using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
 using Processor = forkNS::forkingMachine<Env, Archive>;
@@ -55,6 +59,27 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         return 1; // swallow original; replacement (if any) already re-injected
     }
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+
+#define MAX_KEYCODE 255
+const bool SET=true;
+
+// same "keycode fork-keycode" text format as the Xorg tool reads
+bool load_config_from_file(const std::wstring& path, Processor& processor) {
+    std::wifstream in(path);
+    if (!in) return false;
+
+    std::wstring line;
+    while (std::getline(in, line)) {
+        std::wistringstream ls(line);
+        unsigned key, fork;
+        if (ls >> key >> fork) {
+            if (key < MAX_KEYCODE) {
+                processor.configure_key(fork_configure_key_fork, key, fork, SET);
+            }
+        }
+    }
+    return true;
 }
 
 LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
