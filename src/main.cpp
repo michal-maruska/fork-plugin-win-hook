@@ -135,7 +135,7 @@ void save_configuration_to_registry(Processor& processor) {
 static LSTATUS
 restore_global_value(IN HKEY hKey,
                      LPCWSTR valueNameW,
-                     Processor &processor,
+                     Processor& processor,
                      int attribute)
 {
     // UNICODE_STRING ValueName;
@@ -158,7 +158,7 @@ restore_global_value(IN HKEY hKey,
         }
         processor.configure_global((enum fork_configuration_t) attribute, value, SET);
     } else {
-        g_env.log("configuration value %S not found\n", ValueNameW);
+        g_env.log("configuration value %S not found\n", valueNameW);
     }
     return status;
 }
@@ -171,7 +171,7 @@ void restore_configuration_from_registry(Processor& processor) {
 
     restore_global_value(hKey,
                          L"debug",
-                         g_processor,
+                         processor,
                          fork_configure_debug);
 
     ULONG binary_values[MAX_FORKS];
