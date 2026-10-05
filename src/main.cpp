@@ -110,10 +110,9 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+
     g_processor.create_configs();
 
-    g_processor.set_debug(1);
-    g_processor.configure_key(fork_configure_key_fork, 'A', VK_LSHIFT, 1); // 65 ('A') -> VK_LSHIFT (160)
     WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = "ForkMsgWin";
     RegisterClass(&wc);
     g_msg_window = CreateWindow("ForkMsgWin", "", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
