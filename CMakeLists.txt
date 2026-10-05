@@ -13,6 +13,8 @@ FetchContent_MakeAvailable(forking_machine)
 add_executable(fork-windows-hook WIN32 src/main.cpp)
 target_link_libraries(fork-windows-hook PRIVATE forking_machine::forking_machine)
 set_target_properties(fork-windows-hook PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+target_compile_definitions(fork-windows-hook PRIVATE UNICODE _UNICODE)
+
 
 # Concept:
 # target_compile_features(forking_machine INTERFACE cxx_std_20)
