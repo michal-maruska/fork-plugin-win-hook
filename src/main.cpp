@@ -251,11 +251,13 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_HOTKEY:
         if (wParam == HOTKEY_ANNOTATE) {
             uint64_t marked_seq = g_event_seq;             // capture "now" immediately, before any UI delay
+#if 0
             std::wstring note = prompt_for_text(hwnd);       // small modal, see below
             if (!note.empty() && g_event_log) {
                 fwprintf(g_event_log, L"ANNOTATION\tup_to_seq=%llu\t%ls\n", marked_seq, note.c_str());
                 fflush(g_event_log);
             }
+#endif
         }
         return 0;
     case WM_TIMER:
