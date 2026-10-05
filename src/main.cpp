@@ -80,6 +80,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
+#if 0
 struct FileDumper {
     void operator()(const Entry& e) {
         if (!g_event_log) return;
@@ -89,7 +90,7 @@ struct FileDumper {
     }
 };
 FileDumper file_dumper;
-
+#endif
 
 constexpr auto kRunKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 constexpr auto kRunValueName = L"ForkingMachine";
