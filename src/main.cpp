@@ -147,9 +147,9 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
-    WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = "ForkMsgWin";
-    RegisterClass(&wc);
-    g_msg_window = CreateWindow("ForkMsgWin", "", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
+    WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = L"ForkMsgWin";
+    RegisterClassW(&wc);
+    g_msg_window = CreateWindowExW(0, L"ForkMsgWin", L"", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
 
     NOTIFYICONDATA nid{};
     nid.cbSize = sizeof(nid);
