@@ -153,8 +153,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     wcscpy_s(nid.szTip, L"ForkingMachine");
     Shell_NotifyIcon(NIM_ADD, &nid);
 
-    if 1 {
-            load_config_from_file("%APPDATA%\ForkingMachine\config.txt");
+    if (0) {
+        // load_config_from_file("%APPDATA%\ForkingMachine\config.txt");
     } else  {
         g_processor.create_configs();
         g_processor.set_debug(1);
