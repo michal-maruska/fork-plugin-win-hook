@@ -17,6 +17,9 @@ using Env       = WindowsEnvironment;
 using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
 using Processor = forkNS::forkingMachine<Env, Archive>;
 
+FILE* g_event_log = nullptr;
+uint64_t g_event_seq = 0;
+
 namespace forkNS { extern template class forkingMachine<Env, Archive>; }
 
 Env       g_env;
@@ -76,6 +79,16 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     }
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
+
+struct FileDumper {
+    void operator()(const Entry& e) {
+        if (!g_event_log) return;
+        fprintf(g_event_log, "%llu\t%u\t%u\t%d\t%s\n",
+                ++g_event_seq, e.second.vk, e.second.time, e.first.forked, to_string(e.first.reason));
+        fflush(g_event_log);
+    }
+};
+FileDumper file_dumper;
 
 
 constexpr auto kRunKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
@@ -281,10 +294,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     g_processor.create_configs();
     restore_configuration_from_registry(g_processor);   // from the earlier message
 
+    // in WinMain:
+    // g_event_log=open()
+    // g_processor.register_dumper(file_dumper);
+
     WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = L"ForkMsgWin";
     RegisterClassW(&wc);
     g_msg_window = CreateWindowExW(0, L"ForkMsgWin", L"", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
 
+    // toolbar:
     NOTIFYICONDATA nid{};
     nid.cbSize = sizeof(nid);
     nid.hWnd = g_msg_window;          // reuse the message-only window from the timer code
