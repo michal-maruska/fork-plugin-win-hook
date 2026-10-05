@@ -57,11 +57,42 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
+LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    switch (msg) {
+    case WM_TIMER:
+        if (wParam == TIMER_ID) {
+            Env::Time deadline = g_processor.accept_time(GetTickCount());
+            schedule_deadline(deadline);
+            return 0;
+        }
+        break;
+    case WM_APP + 1:
+        if (lParam == WM_RBUTTONUP) {
+            HMENU menu = CreatePopupMenu();
+            AppendMenuW(menu, MF_STRING, 1, L"Reload config");
+            AppendMenuW(menu, MF_STRING, 2, L"Exit");
+            POINT pt; GetCursorPos(&pt);
+            SetForegroundWindow(hwnd); // required so the menu dismisses correctly
+            int cmd = TrackPopupMenu(menu, TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, nullptr);
+            if (cmd == 1) load_config_from_file(config_path(), g_processor);
+            if (cmd == 2) PostQuitMessage(0);
+            DestroyMenu(menu);
+        }
+        return 0;
+    }
+
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     g_processor.create_configs();
 
     g_processor.set_debug(1);
     g_processor.configure_key(fork_configure_key_fork, 'A', VK_LSHIFT, 1); // 65 ('A') -> VK_LSHIFT (160)
+    WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = "ForkMsgWin";
+    RegisterClass(&wc);
+    g_msg_window = CreateWindow("ForkMsgWin", "", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
+
 
     g_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
     if (!g_hook) return 1;
