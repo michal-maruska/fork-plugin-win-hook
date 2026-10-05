@@ -244,8 +244,19 @@ std::wstring config_path() {
     return (dir / L"config.txt").wstring();
 }
 
+constexpr int HOTKEY_ANNOTATE = 1;
 LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
+    case WM_HOTKEY:
+        if (wParam == HOTKEY_ANNOTATE) {
+            uint64_t marked_seq = g_event_seq;             // capture "now" immediately, before any UI delay
+            std::wstring note = prompt_for_text(hwnd);       // small modal, see below
+            if (!note.empty() && g_event_log) {
+                fwprintf(g_event_log, L"ANNOTATION\tup_to_seq=%llu\t%ls\n", marked_seq, note.c_str());
+                fflush(g_event_log);
+            }
+        }
+        return 0;
     case WM_TIMER:
         if (wParam == TIMER_ID) {
             Env::Time deadline = g_processor.accept_time(GetTickCount());
@@ -313,6 +324,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     nid.hIcon = LoadIcon(nullptr, IDI_APPLICATION); // placeholder; real icon later
     wcscpy_s(nid.szTip, L"ForkingMachine");
     Shell_NotifyIcon(NIM_ADD, &nid);
+
+    // hotkey:
+    RegisterHotKey(g_msg_window, HOTKEY_ANNOTATE, MOD_CONTROL | MOD_ALT, VK_F9);
 
     g_kbd_hook   = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
     g_mouse_hook = SetWindowsHookEx(WH_MOUSE_LL,    LowLevelMouseProc,    hInstance, 0);
