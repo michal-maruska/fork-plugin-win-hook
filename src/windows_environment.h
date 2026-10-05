@@ -50,6 +50,7 @@ public:
         if (ev.raw.flags & LLKHF_EXTENDED) {
             input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
         }
+        log("R-> %u %u", input.ki.wVk, input.ki.wScan);
         input.ki.dwExtraInfo = INJECTED_MARKER;
         SendInput(1, &input, sizeof(INPUT));
     }
