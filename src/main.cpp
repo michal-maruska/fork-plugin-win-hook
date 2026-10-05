@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <sstream>   // for std::wistringstream, used right below in the same function
+#include <shellapi.h>
 
 
 using Env       = WindowsEnvironment;
@@ -129,6 +130,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = "ForkMsgWin";
     RegisterClass(&wc);
     g_msg_window = CreateWindow("ForkMsgWin", "", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
+
+    NOTIFYICONDATA nid{};
+    nid.cbSize = sizeof(nid);
+    nid.hWnd = g_msg_window;          // reuse the message-only window from the timer code
+    nid.uID = 1;
+
+    nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    nid.uCallbackMessage = WM_APP + 1;
+    nid.hIcon = LoadIcon(nullptr, IDI_APPLICATION); // placeholder; real icon later
+    wcscpy_s(nid.szTip, L"ForkingMachine");
+    Shell_NotifyIcon(NIM_ADD, &nid);
 
     if 1 {
             load_config_from_file("%APPDATA%\ForkingMachine\config.txt");
