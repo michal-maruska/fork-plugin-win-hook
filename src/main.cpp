@@ -146,9 +146,12 @@ bool load_config_from_file(const std::wstring& path, Processor& processor) {
 std::wstring config_path() {
     PWSTR appdata = nullptr;
     SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &appdata);
-    std::filesystem::path p = std::filesystem::path(appdata) / L"ForkingMachine" / L"config.txt";
+    std::filesystem::path dir = std::filesystem::path(appdata) / L"ForkingMachine";
     CoTaskMemFree(appdata);
-    return p.wstring();
+
+    std::filesystem::create_directories(dir);   // no-op if it already exists; creates it (and any missing parent) if not
+
+    return (dir / L"config.txt").wstring();
 }
 
 LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
