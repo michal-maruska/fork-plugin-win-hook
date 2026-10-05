@@ -76,11 +76,40 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
+
+constexpr auto kRunKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+constexpr auto kRunValueName = L"ForkingMachine";
+
+bool is_start_on_login_enabled() {
+    HKEY hKey;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, kRunKey, 0, KEY_READ, &hKey) != ERROR_SUCCESS) return false;
+    DWORD type;
+    bool exists = RegQueryValueExW(hKey, kRunValueName, nullptr, &type, nullptr, nullptr) == ERROR_SUCCESS;
+    RegCloseKey(hKey);
+    return exists;
+}
+
+void set_start_on_login(bool enable) {
+    HKEY hKey;
+    RegOpenKeyExW(HKEY_CURRENT_USER, kRunKey, 0, KEY_SET_VALUE, &hKey);
+    if (enable) {
+        wchar_t exePath[MAX_PATH];
+        GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+        RegSetValueExW(hKey, kRunValueName, 0, REG_SZ,
+                        reinterpret_cast<BYTE*>(exePath), (wcslen(exePath) + 1) * sizeof(wchar_t));
+    } else {
+        RegDeleteValueW(hKey, kRunValueName);
+    }
+    RegCloseKey(hKey);
+}
+
+
 #define MAX_KEYCODE 255
 #define MAX_FORKS 16
 const bool SET=true;
 const bool GET=false;
 const short NO_FORK = 0;
+const int NO_VALUE = 0;
 
 void save_configuration_to_registry(Processor& processor) {
     ULONG binary_values[MAX_FORKS];
