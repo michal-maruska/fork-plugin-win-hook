@@ -138,8 +138,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         g_processor.configure_key(fork_configure_key_fork, 'A', VK_LSHIFT, 1); // 65 ('A') -> VK_LSHIFT (160)
     }
 
-    g_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
-    if (!g_hook) return 1;
+    g_kbd_hook   = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
+    g_mouse_hook = SetWindowsHookEx(WH_MOUSE_LL,    LowLevelMouseProc,    hInstance, 0);
+    if (!g_kbd_hook || !g_mouse_hook) return 1;
 
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0)) {
@@ -147,6 +148,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         DispatchMessage(&msg);
     }
 
-    UnhookWindowsHookEx(g_hook);
+    UnhookWindowsHookEx(g_kbd_hook);
+    UnhookWindowsHookEx(g_mouse_hook);
     return 0;
 }
