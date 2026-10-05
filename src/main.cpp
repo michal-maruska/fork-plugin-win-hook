@@ -10,6 +10,8 @@
 #include <sstream>   // for std::wistringstream, used right below in the same function
 #include <shellapi.h>
 
+#include <shlobj.h>
+#include <filesystem>
 
 using Env       = WindowsEnvironment;
 using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
@@ -98,6 +100,14 @@ bool load_config_from_file(const std::wstring& path, Processor& processor) {
     return true;
 }
 
+
+std::wstring config_path() {
+    PWSTR appdata = nullptr;
+    SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &appdata);
+    std::filesystem::path p = std::filesystem::path(appdata) / L"ForkingMachine" / L"config.txt";
+    CoTaskMemFree(appdata);
+    return p.wstring();
+}
 
 LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
