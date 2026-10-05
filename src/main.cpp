@@ -11,6 +11,8 @@
 #include <shlobj.h>
 #include <filesystem>
 
+#include <winreg.h>
+
 using Env       = WindowsEnvironment;
 using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
 using Processor = forkNS::forkingMachine<Env, Archive>;
@@ -75,7 +77,53 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 #define MAX_KEYCODE 255
+#define MAX_FORKS 16
 const bool SET=true;
+const bool GET=false;
+const short NO_FORK = 0;
+
+void save_configuration_to_registry(Processor& processor) {
+    ULONG binary_values[MAX_FORKS];
+    int top = 0;
+
+    for (USHORT key = 0; key < MAX_KEYCODE; key++) {
+        USHORT value = static_cast<USHORT>(processor.configure_key(fork_configure_key_fork, key, 0, GET));
+        if (value != NO_FORK) {
+            binary_values[top++] = (key << 16) | value;
+            if (top == MAX_FORKS) break;
+        }
+    }
+
+    HKEY hKey;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\ForkingMachine", 0, nullptr,
+                         0, KEY_WRITE, nullptr, &hKey, nullptr) == ERROR_SUCCESS) {
+        RegSetValueExW(hKey, L"binary-forks", 0, REG_BINARY,
+                        reinterpret_cast<const BYTE*>(binary_values), top * sizeof(ULONG));
+        RegCloseKey(hKey);
+    }
+}
+
+
+void restore_configuration_from_registry(Processor& processor) {
+    HKEY hKey;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\ForkingMachine", 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+        return; // no saved config: fine, defaults stand
+
+    ULONG binary_values[MAX_FORKS];
+    DWORD size = sizeof(binary_values), type;
+    if (RegQueryValueExW(hKey, L"binary-forks", nullptr, &type,
+                          reinterpret_cast<BYTE*>(binary_values), &size) == ERROR_SUCCESS) {
+        for (DWORD i = 0; i < size / sizeof(ULONG); i++) {
+            USHORT key = binary_values[i] >> 16;
+            USHORT fork = binary_values[i] & 0xFFFF;
+            if (key < MAX_KEYCODE) {
+                processor.configure_key(fork_configure_key_fork, key, fork, SET);
+            }
+        }
+    }
+    RegCloseKey(hKey);
+}
+
 
 // same "keycode fork-keycode" text format as the Xorg tool reads
 bool load_config_from_file(const std::wstring& path, Processor& processor) {
@@ -120,7 +168,11 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             POINT pt; GetCursorPos(&pt);
             SetForegroundWindow(hwnd); // required so the menu dismisses correctly
             int cmd = TrackPopupMenu(menu, TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, nullptr);
-            if (cmd == 1) load_config_from_file(config_path(), g_processor);
+            if (cmd == 1) {
+                if (load_config_from_file(config_path(), g_processor)) {
+                    save_configuration_to_registry(g_processor);
+                }
+            }
             if (cmd == 2) PostQuitMessage(0);
             DestroyMenu(menu);
         }
