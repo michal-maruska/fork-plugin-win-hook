@@ -15,8 +15,24 @@ namespace forkNS { extern template class forkingMachine<Env, Archive>; }
 
 Env*      g_env = new Env();
 Processor g_processor(g_env);
-HHOOK     g_hook = nullptr;
+HHOOK     g_kbd_hook = nullptr;
+HHOOK     g_mouse_hook = nullptr;
+UINT_PTR  g_timer_id  = 0;
+HWND      g_msg_window = nullptr;
 
+constexpr UINT_PTR TIMER_ID = 1;
+
+
+void schedule_deadline(Env::Time deadline) {
+    if (g_timer_id) {
+        KillTimer(g_msg_window, g_timer_id);
+        g_timer_id = 0;
+    }
+    // Env::Time is in kb->time units (ms since boot); SetTimer wants a relative ms delay
+    DWORD now = GetTickCount();
+    DWORD delay_ms = (deadline > now) ? (deadline - now) : 0; // unsigned subtraction, wraparound-safe
+    g_timer_id = SetTimer(g_msg_window, TIMER_ID, delay_ms, nullptr);
+}
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode < 0) {
@@ -36,7 +52,10 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
         // hand over to forkingMachine; it will call WindowsEnvironment::relay_event
         // which re-injects via SendInput with INJECTED_MARKER
-        (void)g_processor.accept_event(ev);
+        Env::Time deadline = g_processor.accept_event(ev);
+        if (deadline != 0) {
+            schedule_deadline(deadline);
+        }
         return 1; // swallow original; replacement (if any) already re-injected
     }
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
