@@ -128,7 +128,10 @@ void restore_configuration_from_registry(Processor& processor) {
 // same "keycode fork-keycode" text format as the Xorg tool reads
 bool load_config_from_file(const std::wstring& path, Processor& processor) {
     std::wifstream in(path);
-    if (!in) return false;
+    if (!in) {
+        g_env.log("failed to open file %ls\n", path.c_str());
+        return false;
+    }
 
     std::wstring line;
     while (std::getline(in, line)) {
@@ -136,6 +139,7 @@ bool load_config_from_file(const std::wstring& path, Processor& processor) {
         unsigned key, fork;
         if (ls >> key >> fork) {
             if (key < MAX_KEYCODE) {
+                g_env.log("forking %d to  %d\n", key, fork);
                 processor.configure_key(fork_configure_key_fork, key, fork, SET);
             }
         }
@@ -172,6 +176,7 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             SetForegroundWindow(hwnd); // required so the menu dismisses correctly
             int cmd = TrackPopupMenu(menu, TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, nullptr);
             if (cmd == 1) {
+                g_env.log("reload config\n");
                 if (load_config_from_file(config_path(), g_processor)) {
                     save_configuration_to_registry(g_processor);
                 }
