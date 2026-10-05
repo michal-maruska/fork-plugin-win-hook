@@ -19,8 +19,8 @@ using Processor = forkNS::forkingMachine<Env, Archive>;
 
 namespace forkNS { extern template class forkingMachine<Env, Archive>; }
 
-Env*      g_env = new Env();
-Processor g_processor(g_env);
+Env       g_env;
+Processor g_processor(&g_env);
 HHOOK     g_kbd_hook = nullptr;
 HHOOK     g_mouse_hook = nullptr;
 UINT_PTR  g_timer_id  = 0;
