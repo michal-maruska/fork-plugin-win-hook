@@ -34,6 +34,15 @@ void schedule_deadline(Env::Time deadline) {
     g_timer_id = SetTimer(g_msg_window, TIMER_ID, delay_ms, nullptr);
 }
 
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode == HC_ACTION) {
+        g_processor.accept_confirmation();
+        if (g_timer_id) { KillTimer(g_msg_window, g_timer_id); g_timer_id = 0; }
+    }
+    return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+
+
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode < 0) {
         return CallNextHookEx(nullptr, nCode, wParam, lParam);
@@ -118,8 +127,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     g_msg_window = CreateWindow("ForkMsgWin", "", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
 
 
-    g_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
-    if (!g_hook) return 1;
+    g_kbd_hook   = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
+    g_mouse_hook = SetWindowsHookEx(WH_MOUSE_LL,    LowLevelMouseProc,    hInstance, 0);
+    if (!g_kbd_hook || !g_mouse_hook) return 1;
 
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0)) {
@@ -127,6 +137,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         DispatchMessage(&msg);
     }
 
-    UnhookWindowsHookEx(g_hook);
+    UnhookWindowsHookEx(g_kbd_hook);
+    UnhookWindowsHookEx(g_mouse_hook);
     return 0;
 }
