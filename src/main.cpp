@@ -25,6 +25,7 @@ HHOOK     g_kbd_hook = nullptr;
 HHOOK     g_mouse_hook = nullptr;
 UINT_PTR  g_timer_id  = 0;
 HWND      g_msg_window = nullptr;
+bool      g_debug_enabled = false;
 
 constexpr UINT_PTR TIMER_ID = 1;
 
@@ -174,6 +175,9 @@ void restore_configuration_from_registry(Processor& processor) {
                          processor,
                          fork_configure_debug);
 
+    // stupid: processor should be also g_
+    g_debug_enabled = processor.configure_global(fork_configure_debug, NO_VALUE, GET);
+
     ULONG binary_values[MAX_FORKS];
     DWORD size = sizeof(binary_values), type;
     if (RegQueryValueExW(hKey, L"binary-forks", nullptr, &type,
@@ -237,20 +241,33 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         }
         break;
     case WM_APP + 1:
+
         if (lParam == WM_RBUTTONUP) {
             HMENU menu = CreatePopupMenu();
             AppendMenuW(menu, MF_STRING, 1, L"Reload config");
             AppendMenuW(menu, MF_STRING, 2, L"Exit");
+            AppendMenuW(menu, MF_STRING | (g_debug_enabled ? MF_CHECKED : 0), 3, L"Debug logging");
+            AppendMenuW(menu, MF_STRING | (is_start_on_login_enabled() ? MF_CHECKED : 0), 4, L"Start at login");
+
             POINT pt; GetCursorPos(&pt);
             SetForegroundWindow(hwnd); // required so the menu dismisses correctly
             int cmd = TrackPopupMenu(menu, TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, nullptr);
-            if (cmd == 1) {
+            switch (cmd) {
+            case 1:
                 g_env.log("reload config\n");
                 if (load_config_from_file(config_path(), g_processor)) {
                     save_configuration_to_registry(g_processor);
-                }
+                };
+                break;
+            case 2: PostQuitMessage(0); break;
+            case 3:
+                g_debug_enabled = !g_debug_enabled; // as int
+                g_processor.configure_global(fork_configure_debug, g_debug_enabled, SET);
+                // ....
+                break;
+            case 4:
+                set_start_on_login(!is_start_on_login_enabled());
             }
-            if (cmd == 2) PostQuitMessage(0);
             DestroyMenu(menu);
         }
         return 0;
