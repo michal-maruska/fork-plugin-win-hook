@@ -185,6 +185,7 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
     g_processor.create_configs();
+    restore_configuration_from_registry(g_processor);   // from the earlier message
 
     WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = L"ForkMsgWin";
     RegisterClassW(&wc);
