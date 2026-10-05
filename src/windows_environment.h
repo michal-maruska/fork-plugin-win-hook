@@ -77,5 +77,6 @@ public:
     void free_event(WindowsEvent* pe) const { (void)pe; }
     void rewrite_event(WindowsEvent& pe, Keycode code) {
         pe.raw.vkCode = code;
+        pe.raw.scanCode = static_cast<DWORD>(MapVirtualKey(code, MAPVK_VK_TO_VSC));
     }
 };
