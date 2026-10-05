@@ -50,7 +50,7 @@ public:
         if (ev.raw.flags & LLKHF_EXTENDED) {
             input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
         }
-        log("R-> %u %u", input.ki.wVk, input.ki.wScan);
+        log("O-> %u %u", input.ki.wVk, input.ki.wScan);
         input.ki.dwExtraInfo = INJECTED_MARKER;
         SendInput(1, &input, sizeof(INPUT));
     }
@@ -76,7 +76,9 @@ public:
     }
     void free_event(WindowsEvent* pe) const { (void)pe; }
     void rewrite_event(WindowsEvent& pe, Keycode code) {
+        DWORD new_scan_code = static_cast<DWORD>(MapVirtualKey(code, MAPVK_VK_TO_VSC));
+        log("R: %u %u -> %u %u", pe.raw.vkCode, pe.raw.scanCode, code, new_scan_code);
         pe.raw.vkCode = code;
-        pe.raw.scanCode = static_cast<DWORD>(MapVirtualKey(code, MAPVK_VK_TO_VSC));
+        pe.raw.scanCode = new_scan_code;
     }
 };
