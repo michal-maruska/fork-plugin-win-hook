@@ -6,6 +6,9 @@
 #include "circular_archive.h"
 #include <winreg.h>
 
+#include <fstream>
+#include <sstream>   // for std::wistringstream, used right below in the same function
+
 
 using Env       = WindowsEnvironment;
 using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
@@ -72,6 +75,28 @@ bool load_config(DWORD& out_value) {
     return r == ERROR_SUCCESS;
 }
 
+#define MAX_KEYCODE 255
+const bool SET=true;
+
+// same "keycode fork-keycode" text format as the Xorg tool reads
+bool load_config_from_file(const std::wstring& path, Processor& processor) {
+    std::wifstream in(path);
+    if (!in) return false;
+
+    std::wstring line;
+    while (std::getline(in, line)) {
+        std::wistringstream ls(line);
+        unsigned key, fork;
+        if (ls >> key >> fork) {
+            if (key < MAX_KEYCODE) {
+                processor.configure_key(fork_configure_key_fork, key, fork, SET);
+            }
+        }
+    }
+    return true;
+}
+
+
 LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_TIMER:
@@ -100,14 +125,18 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
-    g_processor.create_configs();
 
-    g_processor.set_debug(1);
-    g_processor.configure_key(fork_configure_key_fork, 'A', VK_LSHIFT, 1); // 65 ('A') -> VK_LSHIFT (160)
     WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = "ForkMsgWin";
     RegisterClass(&wc);
     g_msg_window = CreateWindow("ForkMsgWin", "", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
 
+    if 1 {
+            load_config_from_file("%APPDATA%\ForkingMachine\config.txt");
+    } else  {
+        g_processor.create_configs();
+        g_processor.set_debug(1);
+        g_processor.configure_key(fork_configure_key_fork, 'A', VK_LSHIFT, 1); // 65 ('A') -> VK_LSHIFT (160)
+    }
 
     g_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
     if (!g_hook) return 1;
