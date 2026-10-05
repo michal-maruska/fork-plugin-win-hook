@@ -15,6 +15,10 @@ HHOOK     g_hook = nullptr;
 
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode < 0) {
+        return CallNextHookEx(nullptr, nCode, wParam, lParam);
+    }
+
     if (nCode == HC_ACTION) {
         auto* kb = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
 
@@ -38,7 +42,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     g_processor.create_configs();
 
     g_processor.set_debug(1);
-    g_processor.configure_key(fork_configure_key_fork, 65, 160, 1); // 64 is A
+    g_processor.configure_key(fork_configure_key_fork, 'A', VK_LSHIFT, 1); // 65 ('A') -> VK_LSHIFT (160)
 
     g_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
     if (!g_hook) return 1;

@@ -47,6 +47,9 @@ public:
         input.ki.wVk = static_cast<WORD>(ev.raw.vkCode);
         input.ki.wScan = static_cast<WORD>(ev.raw.scanCode);
         input.ki.dwFlags = ev.key_down ? 0 : KEYEVENTF_KEYUP;
+        if (ev.raw.flags & LLKHF_EXTENDED) {
+            input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+        }
         input.ki.dwExtraInfo = INJECTED_MARKER;
         SendInput(1, &input, sizeof(INPUT));
     }
