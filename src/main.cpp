@@ -65,7 +65,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
-
+#if 0
 bool load_config(DWORD& out_value) {
     HKEY key = nullptr;
     if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\ForkingMachine", 0, KEY_READ, &key) != ERROR_SUCCESS)
@@ -75,6 +75,7 @@ bool load_config(DWORD& out_value) {
     RegCloseKey(key);
     return r == ERROR_SUCCESS;
 }
+#endif
 
 #define MAX_KEYCODE 255
 const bool SET=true;
