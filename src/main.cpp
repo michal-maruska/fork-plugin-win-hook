@@ -132,11 +132,47 @@ void save_configuration_to_registry(Processor& processor) {
     }
 }
 
+static LSTATUS
+restore_global_value(IN HKEY hKey,
+                     LPCWSTR valueNameW,
+                     Processor &processor,
+                     int attribute)
+{
+    // UNICODE_STRING ValueName;
+    // RtlInitUnicodeString(&ValueName, ValueNameW);
+    DWORD value;
+    DWORD type  = 0;
+    DWORD size = sizeof(DWORD);
+
+    LSTATUS status = RegQueryValueExW(hKey,
+                                      valueNameW,
+                                      nullptr,
+                                      &type,
+                                      reinterpret_cast<LPBYTE>(&value),
+                                      &size);
+
+    if (status == ERROR_SUCCESS) {
+        if (type != REG_DWORD) {
+            // Unexpected type — bail out or coerce as needed.
+            return ERROR_DATATYPE_MISMATCH;
+        }
+        processor.configure_global((enum fork_configuration_t) attribute, value, SET);
+    } else {
+        g_env.log("configuration value %S not found\n", ValueNameW);
+    }
+    return status;
+}
+
 
 void restore_configuration_from_registry(Processor& processor) {
     HKEY hKey;
     if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\ForkingMachine", 0, KEY_READ, &hKey) != ERROR_SUCCESS)
         return; // no saved config: fine, defaults stand
+
+    restore_global_value(hKey,
+                         L"debug",
+                         g_processor,
+                         fork_configure_debug);
 
     ULONG binary_values[MAX_FORKS];
     DWORD size = sizeof(binary_values), type;
