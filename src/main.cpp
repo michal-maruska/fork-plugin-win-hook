@@ -127,6 +127,10 @@ void restore_configuration_from_registry(Processor& processor) {
 
 // same "keycode fork-keycode" text format as the Xorg tool reads
 bool load_config_from_file(const std::wstring& path, Processor& processor) {
+    if (!std::filesystem::exists(path)) {
+        g_env.log("config file not found at: %ls\n", path.c_str());
+        return false;
+    }
     std::wifstream in(path);
     if (!in) {
         g_env.log("failed to open file %ls\n", path.c_str());
