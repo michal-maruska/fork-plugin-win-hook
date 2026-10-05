@@ -40,6 +40,15 @@ void schedule_deadline(Env::Time deadline) {
     g_timer_id = SetTimer(g_msg_window, TIMER_ID, delay_ms, nullptr);
 }
 
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode == HC_ACTION) {
+        g_processor.accept_confirmation();
+        if (g_timer_id) { KillTimer(g_msg_window, g_timer_id); g_timer_id = 0; }
+    }
+    return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+
+
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode < 0) {
         return CallNextHookEx(nullptr, nCode, wParam, lParam);
