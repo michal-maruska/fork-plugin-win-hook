@@ -140,6 +140,9 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
+using Entry = std::pair<ForkInfo, Env::PlatformArchive>;
+using forkNS::to_string;
+
 struct FileDumper {
     void operator()(const Entry& e) {
         if (!g_event_log) return;
@@ -149,6 +152,11 @@ struct FileDumper {
     }
 };
 FileDumper file_dumper;
+
+static std::wstring prompt_for_text(HWND hwnd) {
+    (void)hwnd;
+    return L"";
+}
 
 
 constexpr auto kRunKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
