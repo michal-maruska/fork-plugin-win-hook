@@ -32,6 +32,51 @@ bool      g_debug_enabled = false;
 
 constexpr UINT_PTR TIMER_ID = 1;
 
+#define BitIsOn(ptr, bit) (!!(((const BYTE *) (ptr))[(bit)>>3] & (1 << ((bit) & 7))))
+#define SetBit(ptr, bit)   (((BYTE *) (ptr))[(bit)>>3] |= (1 << ((bit) & 7)))
+#define ClearBit(ptr, bit) (((BYTE *) (ptr))[(bit)>>3] &= ~(1 << ((bit) & 7)))
+
+constexpr int KEY_POSTED = 1;
+constexpr int KEY_PROCESSED = 2;
+
+struct DeviceKey {
+    BYTE postdown[32]{};
+    BYTE down[32]{};
+};
+
+struct Device {
+    DeviceKey* key;
+};
+
+using DeviceIntPtr = Device*;
+
+static DeviceKey g_device_key{};
+static Device g_device{&g_device_key};
+
+void set_key_down(DeviceIntPtr pDev, int key_code, int type) {
+    if (type == KEY_PROCESSED)
+        SetBit(pDev->key->down, key_code);
+    else
+        SetBit(pDev->key->postdown, key_code);
+}
+
+void set_key_up(DeviceIntPtr pDev, int key_code, int type) {
+    if (type == KEY_PROCESSED)
+        ClearBit(pDev->key->down, key_code);
+    else
+        ClearBit(pDev->key->postdown, key_code);
+}
+
+bool key_is_down(DeviceIntPtr pDev, int key_code, int type) {
+    bool ret = false;
+    if (type & KEY_PROCESSED)
+        ret = ret || BitIsOn(pDev->key->down, key_code);
+    if (type & KEY_POSTED)
+        ret = ret || BitIsOn(pDev->key->postdown, key_code);
+
+    return ret;
+}
+
 
 void schedule_deadline(Env::Time deadline) {
     if (g_timer_id) {
@@ -67,13 +112,28 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         }
 
         bool key_down = (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN);
-        WindowsEvent ev{*kb, key_down};
+        int key_code = static_cast<int>(kb->vkCode & 0xFF);
 
-        // hand over to forkingMachine; it will call WindowsEnvironment::relay_event
-        // which re-injects via SendInput with INJECTED_MARKER
-        Env::Time deadline = g_processor.accept_event(ev);
-        if (deadline != 0) {
-            schedule_deadline(deadline);
+        if (key_down) {
+            if (!key_is_down(&g_device, key_code, KEY_POSTED)) {
+                set_key_down(&g_device, key_code, KEY_POSTED);
+                WindowsEvent ev{*kb, key_down};
+
+                // hand over to forkingMachine; it will call WindowsEnvironment::relay_event
+                // which re-injects via SendInput with INJECTED_MARKER
+                Env::Time deadline = g_processor.accept_event(ev);
+                if (deadline != 0) {
+                    schedule_deadline(deadline);
+                }
+            }
+        } else {
+            set_key_up(&g_device, key_code, KEY_POSTED);
+            WindowsEvent ev{*kb, key_down};
+
+            Env::Time deadline = g_processor.accept_event(ev);
+            if (deadline != 0) {
+                schedule_deadline(deadline);
+            }
         }
         return 1; // swallow original; replacement (if any) already re-injected
     }
