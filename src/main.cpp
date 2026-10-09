@@ -141,13 +141,12 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 using Entry = std::pair<ForkInfo, Env::PlatformArchive>;
-using forkNS::to_string;
 
 struct FileDumper {
     void operator()(const Entry& e) {
         if (!g_event_log) return;
         fprintf(g_event_log, "%llu\t%u\t%u\t%d\t%s\n",
-                ++g_event_seq, e.second.vk, e.second.time, e.first.forked, to_string(e.first.reason));
+                ++g_event_seq, e.second.vk, e.second.time, e.first.forked, std::to_string((int)e.first.reason).c_str());
         fflush(g_event_log);
     }
 };
