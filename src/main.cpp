@@ -53,28 +53,16 @@ using DeviceIntPtr = Device*;
 static DeviceKey g_device_key{};
 static Device g_device{&g_device_key};
 
-void set_key_down(DeviceIntPtr pDev, int key_code, int type) {
-    if (type == KEY_PROCESSED)
-        SetBit(pDev->key->down, key_code);
-    else
-        SetBit(pDev->key->postdown, key_code);
+void set_key_down(int key_code) {
+    SetBit(g_device.down, key_code);
 }
 
-void set_key_up(DeviceIntPtr pDev, int key_code, int type) {
-    if (type == KEY_PROCESSED)
-        ClearBit(pDev->key->down, key_code);
-    else
-        ClearBit(pDev->key->postdown, key_code);
+void set_key_up(int key_code) {
+    ClearBit(g_device.down, key_code);
 }
 
-bool key_is_down(DeviceIntPtr pDev, int key_code, int type) {
-    bool ret = false;
-    if (type & KEY_PROCESSED)
-        ret = ret || BitIsOn(pDev->key->down, key_code);
-    if (type & KEY_POSTED)
-        ret = ret || BitIsOn(pDev->key->postdown, key_code);
-
-    return ret;
+bool key_is_down(int key_code) {
+    return BitIsOn(g_device.down, key_code);
 }
 
 
@@ -115,8 +103,8 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         int key_code = static_cast<int>(kb->vkCode & 0xFF);
 
         if (key_down) {
-            if (!key_is_down(&g_device, key_code, KEY_POSTED)) {
-                set_key_down(&g_device, key_code, KEY_POSTED);
+            if (!key_is_down(key_code)) {
+                set_key_down(key_code);
                 WindowsEvent ev{*kb, key_down};
 
                 // hand over to forkingMachine; it will call WindowsEnvironment::relay_event
@@ -127,7 +115,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 }
             }
         } else {
-            set_key_up(&g_device, key_code, KEY_POSTED);
+            set_key_up(key_code);
             WindowsEvent ev{*kb, key_down};
 
             Env::Time deadline = g_processor.accept_event(ev);
