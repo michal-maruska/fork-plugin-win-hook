@@ -305,8 +305,11 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
+    g_env.log("main!\n");
     g_processor.create_configs();
+    g_env.log("restore config from registry\n");
     restore_configuration_from_registry(g_processor);   // from the earlier message
+    g_env.log("restored config from registry\n");
 
     // in WinMain:
     // g_event_log=open()
@@ -315,6 +318,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     WNDCLASS wc{}; wc.lpfnWndProc = MsgWindowProc; wc.hInstance = hInstance; wc.lpszClassName = L"ForkMsgWin";
     RegisterClassW(&wc);
     g_msg_window = CreateWindowExW(0, L"ForkMsgWin", L"", 0, 0,0,0,0, HWND_MESSAGE, nullptr, hInstance, nullptr);
+    if (!g_msg_window) {
+        g_env.log("CreateWindowExW failed: %lu\n", GetLastError());
+    }
 
     // toolbar:
     NOTIFYICONDATA nid{};
@@ -326,8 +332,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     nid.uCallbackMessage = WM_APP + 1;
     nid.hIcon = LoadIcon(nullptr, IDI_APPLICATION); // placeholder; real icon later
     wcscpy_s(nid.szTip, L"ForkingMachine");
-    Shell_NotifyIcon(NIM_ADD, &nid);
 
+    BOOL ok = Shell_NotifyIcon(NIM_ADD, &nid);
+    if (!ok) {
+        g_env.log("Shell_NotifyIcon NIM_ADD failed: %lu\n", GetLastError());
+    }
+
+    g_env.log("register hotkey Ctrol | Alt+F9\n");
     // hotkey:
     RegisterHotKey(g_msg_window, HOTKEY_ANNOTATE, MOD_CONTROL | MOD_ALT, VK_F9);
 
