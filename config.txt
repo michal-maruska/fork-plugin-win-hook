@@ -1,0 +1,6 @@
+# Sample config file for forking keys to modifiers:
+
+# A -> Shift
+65 160
+# space -> Shift
+32 160
