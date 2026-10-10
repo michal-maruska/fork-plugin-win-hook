@@ -18,9 +18,8 @@ set_target_properties(fork-windows-hook PROPERTIES
     MSVC_RUNTIME_LIBRARY "MultiThreaded"
 )
 
-target_compile_definitions(fork-windows-hook PRIVATE UNICODE _UNICODE)
+target_compile_definitions(fork-windows-hook PRIVATE UNICODE _UNICODE NOMINMAX)
 target_compile_definitions(fork-windows-hook PRIVATE _WIN32_WINNT=0x0A00 WINVER=0x0A00)  # targets Win10+
-
 
 # Concept:
 # target_compile_features(forking_machine INTERFACE cxx_std_20)
