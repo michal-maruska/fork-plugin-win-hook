@@ -35,6 +35,8 @@ jobs:
       - uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: build/fork-windows-hook.exe
+          files: |
+            build/fork-windows-hook.exe
+            config.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
