@@ -12,6 +12,8 @@
 #include <filesystem>
 
 #include <winreg.h>
+#include <exception>
+#include <cstdlib>
 
 using Env       = WindowsEnvironment;
 using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
@@ -351,7 +353,17 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+
+static LONG WINAPI crash_filter(EXCEPTION_POINTERS* ep) {
+    flog::write("CRASH code=0x%08lX addr=%p",
+                ep->ExceptionRecord->ExceptionCode,
+                ep->ExceptionRecord->ExceptionAddress);
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+    SetUnhandledExceptionFilter(crash_filter);
 
     g_env.log("main!\n");
     g_processor.create_configs();
