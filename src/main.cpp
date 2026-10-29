@@ -1,6 +1,7 @@
 #include <windows.h>
 #include "machine.h"
 #include "fork_base.h"
+#include "userspace.h"
 #include "windows_environment.h"
 #include "circular_archive.h"
 
@@ -17,12 +18,12 @@
 
 using Env       = WindowsEnvironment;
 using Archive   = CircularArchive<ForkInfo, Env::PlatformArchive>;
-using Processor = forkNS::forkingMachine<Env, Archive>;
+using Processor = forkNS::forkingMachine<Env, UserspaceTrait>;
 
 FILE* g_event_log = nullptr;
 uint64_t g_event_seq = 0;
 
-namespace forkNS { extern template class forkingMachine<Env, Archive>; }
+namespace forkNS { extern template class forkingMachine<Env, UserspaceTrait>; }
 
 Env       g_env;
 Processor g_processor(&g_env);
