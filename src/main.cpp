@@ -354,17 +354,18 @@ LRESULT CALLBACK MsgWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-
+#if 0
 static LONG WINAPI crash_filter(EXCEPTION_POINTERS* ep) {
     flog::write("CRASH code=0x%08lX addr=%p",
                 ep->ExceptionRecord->ExceptionCode,
                 ep->ExceptionRecord->ExceptionAddress);
     return EXCEPTION_EXECUTE_HANDLER;
 }
+#endif
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
-    SetUnhandledExceptionFilter(crash_filter);
+  //    SetUnhandledExceptionFilter(crash_filter);
 
     g_env.log("main!\n");
     g_processor.create_configs();
