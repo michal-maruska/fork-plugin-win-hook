@@ -368,7 +368,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   //    SetUnhandledExceptionFilter(crash_filter);
 
     g_env.log("main!\n");
-    g_processor.create_configs();
     g_env.log("restore config from registry\n");
     restore_configuration_from_registry(g_processor);   // from the earlier message
     g_env.log("restored config from registry\n");
